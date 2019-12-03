@@ -1,12 +1,14 @@
 #include <unistd.h>  //exex¡¢forkÍ·ÎÄ¼ş
 #include <signal.h>  //signalÍ·ÎÄ¼ş
-#include<sys/types.h>  //waitÍ·ÎÄ¼ş
-#include<sys/wait.h>  //waitÍ·ÎÄ¼ş
+#include <sys/types.h>  //waitÍ·ÎÄ¼ş
+#include <sys/wait.h>  //waitÍ·ÎÄ¼ş
 #include <stdlib.h>  //exitÍ·ÎÄ¼ş
+#include <pthread.h> //mutexÍ·ÎÄ¼ş
 #include <stdio.h> 
 
 int pipefd[2];   /*´´½¨ÎŞÃû¹ÜµÀ,pipefd[0]Ö»ÄÜÓÃÓÚ¶Á;  pipe[1]Ö»ÄÜÓÃÓÚĞ´*/
 int child_1, child_2;  //ÓÃÓÚ´æ´¢´´½¨µÄ×Ó½ø³Ìpid
+pthread_mutex_t mutex;  //½ø³Ì»¥³âËø£¬±ÜÃâÇÀÕ¼´òÓ¡Êä³ö
 
 void kill_child1() { //¸¸½ø³ÌÉ±ËÀ×Ó½ø³Ì1
 	printf("Child process 1 is killed by parent!\n");
@@ -29,7 +31,8 @@ void kill_childprocess() {  //¸¸½ø³Ì²¶×½µ½ÖĞ¶ÏĞÅºÅ£¬ÓÃÏµÍ³µ÷ÓÃKill()ÏòÁ½¸ö×Ó½ø ³
 
 int main(int argc, char const* argv[]) {
 
-	int rtn; //º¯ÊıÖ´ĞĞ·µ»ØÖµ
+	int rtn; 
+	pthread_mutex_init(&mutex, NULL); //³õÊ¼»¯mutex
 
 	//´´½¨¹ÜµÀ 
 	if (pipe(pipefd) == -1) {
@@ -52,6 +55,9 @@ int main(int argc, char const* argv[]) {
 		while (1) { //ËÀÑ­»·ÀïÃ¿ÃëÍ¨¹ı¹ÜµÀ·¢ËÍĞÅºÅ¸ø×Ó½ø³Ì2
 			sleep(1);
 			write(pipefd[1], (void*)&i, sizeof(int));
+			pthread_mutex_lock(&mutex);
+			printf("I have send you %d times!\n", i);
+			pthread_mutex_unlock(&mutex);
 			i++;
 		}
 		break;
@@ -74,8 +80,9 @@ int main(int argc, char const* argv[]) {
 		int i = 1;
 		while (1) { //ËÀÑ­»·ÀïÃ¿ÃëÍ¨¹ı¹ÜµÀ·¢ËÍĞÅºÅ¸ø×Ó½ø³Ì2
 			read(pipefd[0], (void*)&i, sizeof(int));
+			pthread_mutex_lock(&mutex);
 			printf("I have received your message %d times!\n", i);
-			i++;
+			pthread_mutex_unlock(&mutex);
 		}
 		break;
 	default:
