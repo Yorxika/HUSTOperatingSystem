@@ -22,6 +22,9 @@ void printdir(char* dir, int deepth) {
 		return;
 	}
 
+	printf("\n");
+	for (int i = 0; i < deepth; i += 4)
+		printf("\t");
 	printf("%s\n\n", dir);  //打印当前路径
 
 	chdir(dir);  //进入目录
@@ -34,18 +37,22 @@ void printdir(char* dir, int deepth) {
 				else {
 					//不是. 或者 .. 打印目录项的深度、目录名等信息 递归调用printdir,打印子目录的信息,其中的depth+4; 
 					//printf("Current dir  deepth is %d !", deepth);
-					printf("depth: %d \t", deepth);
+					for (int i = 0; i < deepth; i += 4)
+						printf("\t");
+					printf("Depth: %d ", deepth);
 					printInfo(*statbuf);
-					printf("%s\n", entry->d_name);
+					printf("Dirname: %s\n", entry->d_name);
 					printdir(entry->d_name, deepth + 4);
 				}
 			}
 			else {
 				//打印文件的深度、文件名等信息
 				//printf("Current file deepth is %d !", deepth);
-				printf("depth: %d \t", deepth);
+				for (int i = 0; i < deepth; i += 4)
+					printf("\t");
+				printf("Depth: %d ", deepth);
 				printInfo(*statbuf);
-				printf("%s\n", entry->d_name);
+				printf("Filename: %s\n", entry->d_name);
 			}
 	}
 	chdir("../");
@@ -74,7 +81,7 @@ void printFileDetails(mode_t mode){
 	str[8] = mode & S_IWOTH ? 'w' : '-';
 	str[9] = mode & S_IXOTH ? 'x' : '-';
 
-	printf("%s\t", str);
+	printf("Mode: %s ", str);
 }
 
 void printInfo(struct stat state){
@@ -82,45 +89,61 @@ void printInfo(struct stat state){
 	printFileDetails(state.st_mode);
 
 	//硬连接的数目
-	printf("%ld\t", state.st_nlink);
+	printf("%ld ", state.st_nlink);
 
 	//用户名
 	struct passwd* pwd;
 	if ((pwd = getpwuid(state.st_uid)) != NULL) {
-		printf("%s\t", pwd->pw_name);
+		printf("User: %s ", pwd->pw_name);
 	}
 	else {
-		printf("%d\t", state.st_uid);
+		printf("%d ", state.st_uid);
 	}
 
 	//群组
 	struct group* grp;
 	if ((grp = getgrgid(state.st_gid)) != NULL) {
-		printf("%s\t", grp->gr_name);
+		printf("Group: %s ", grp->gr_name);
 	}
 	else
-		printf("%8d\t", state.st_gid);
+		printf("%8d ", state.st_gid);
 
 
 	//文件大小
 	if(state.st_size < 1024)
-		printf("%lfB\t", (double)state.st_size);
+		printf("Size: %lfB ", (double)state.st_size);
 	else if (state.st_size < 1024 * 1024) 
-		printf("%lfK\t", (double)state.st_size / 1024);
+		printf("Size: %lfK ", (double)state.st_size / 1024);
 	else if (state.st_size < 1024 * 1024 * 1024) 
-		printf("%lfM\t", (double)state.st_size / 1024 / 1024);
+		printf("Size: %lfM ", (double)state.st_size / 1024 / 1024);
 	else
-		printf("%lfG\t", (double)state.st_size / 1024 / 1024 / 1024);
+		printf("Size: %lfG ", (double)state.st_size / 1024 / 1024 / 1024);
 
 	//修改时间
 	time_t t = state.st_mtime;
 	struct tm time;
 	localtime_r(&t, &time);
-	printf("modified time:%d/", time.tm_year + 1900);
+	printf("Modified time:%d/", time.tm_year + 1900);
 	printf("%d/", time.tm_mon + 1);
-	printf("%d\t", time.tm_mday);
+	printf("%d ", time.tm_mday);
+	printf("%02d:%02d:%02d ", time.tm_hour, time.tm_min, time.tm_sec);
 	//printf("%.12s ", ctime(state.st_mtime) + 4);
 
+	//访问时间
+	t = state.st_atime;
+	localtime_r(&t, &time);
+	printf("Access time:%d/", time.tm_year + 1900);
+	printf("%d/", time.tm_mon + 1);
+	printf("%d ", time.tm_mday);
+	printf("%02d:%02d:%02d ", time.tm_hour, time.tm_min, time.tm_sec);
+
+	//修改属性属性
+    /*t = state.st_ctime;
+	localtime_r(&t, &time);
+	printf("Chmod time:%d/", time.tm_year + 1900);
+	printf("%d/", time.tm_mon + 1);
+	printf("%d ", time.tm_mday);
+	printf("%02d:%02d:%02d\t", time.tm_hour, time.tm_min, time.tm_sec);*/
 }
 
 
